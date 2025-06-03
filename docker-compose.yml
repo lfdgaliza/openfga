@@ -3,13 +3,40 @@ services:
     image: postgres:16-alpine
     container_name: openfga_postgres
     environment:
-      POSTGRES_DB: webapp
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres123
+      POSTGRES_MULTIPLE_DATABASES: webapp,openfga
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./init-multiple-dbs.sh:/docker-entrypoint-initdb.d/init-multiple-dbs.sh
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  openfga:
+    image: openfga/openfga
+    container_name: openfga_server
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - OPENFGA_DATASTORE_ENGINE=postgres
+      - OPENFGA_DATASTORE_URI=postgres://postgres:postgres123@postgres:5432/openfga
+      - OPENFGA_LOG_FORMAT=json
+      - OPENFGA_AUTHN_METHOD=none
+    entrypoint: ["/bin/sh", "-c"]
+    command: 
+      - |
+        /openfga migrate
+        /openfga run
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+      - "3000:3000"
 
 volumes:
   postgres_data:
