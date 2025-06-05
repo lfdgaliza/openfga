@@ -5,7 +5,7 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <UserSecretsId>aspnet-WebApplication1-ac004e24-082d-4648-9a4c-c6a0ea1e5058</UserSecretsId>
-        <RootNamespace>WebApplication1</RootNamespace>
+        <RootNamespace>WebApp</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
@@ -13,6 +13,7 @@
         <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.5" />
         <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="9.0.5" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.5" />
+        <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="9.0.0" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
     </ItemGroup>
 
