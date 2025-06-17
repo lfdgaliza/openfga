@@ -1,0 +1,141 @@
+model: |
+  model
+    schema 1.1
+
+  type user
+
+  type org
+    relations
+      define admin: [user]
+      define regular: [user]
+      define member: admin or regular
+
+      define can_edit_folders: admin
+
+  type folder
+    relations
+      define org: [org]
+      define editor: [user]
+      define owner: [user]
+      define parent: [folder]
+      define viewer: [user]
+
+      define can_view: (viewer or can_edit) and member from org
+      define can_edit: (owner or editor or can_edit from parent or can_edit_folders from org) and member from org
+
+  type document
+    relations
+      define org: [org]
+      define editor: [user]
+      define owner: [user]
+      define parent: [folder]
+      define viewer: [user]
+
+      define can_view: (viewer or can_edit) and member from org
+      define can_edit: (owner or editor or can_edit from parent) and member from org
+
+tuples:
+
+  ## Users
+
+  # acme_regular
+  - user: user:acme_regular
+    object: org:acme
+    relation: regular
+
+  - user: user:acme_admin
+    object: org:acme
+    relation: admin
+
+  # boring_admin
+  - user: user:boring_admin
+    object: org:boring
+    relation: admin
+
+  # Folder "float" has no org, so neither it's owner (acme_regular) nor anyone else can view it or edit it.
+  - user: user:acme_regular
+    object: folder:float
+    relation: owner
+
+  ### Folders
+  
+  # acme_regulars_folder
+  - user: org:acme
+    object: folder:acme_regulars_folder
+    relation: org
+
+  - user: user:acme_regular
+    object: folder:acme_regulars_folder
+    relation: owner
+  
+  ### Documents
+
+  # acme_regulars_document
+  - user: org:acme
+    object: document:acme_regulars_document
+    relation: org
+
+  - user: folder:acme_regulars_folder
+    object: document:acme_regulars_document
+    relation: parent
+
+tests:
+  - name: Folder "float" has no org, so neither it's owner (acme_regular) nor anyone else can view it or edit it.
+    check:
+      - user: user:acme_regular
+        object: folder:float
+        assertions:
+          can_edit: false
+          can_view: false
+
+      - user: user:acme_admin
+        object: folder:float
+        assertions:
+          can_edit: false
+          can_view: false
+
+      - user: user:boring_admin
+        object: folder:float
+        assertions:
+          can_edit: false
+          can_view: false
+
+  - name: acme_regular can view and edit their own folder, but boring_admin cannot
+    check:
+      - user: user:acme_regular
+        object: folder:acme_regulars_folder
+        assertions:
+          can_edit: true
+          can_view: true
+
+      - user: user:acme_admin
+        object: folder:acme_regulars_folder
+        assertions:
+          can_edit: true
+          can_view: true
+
+      - user: user:boring_admin
+        object: folder:acme_regulars_folder
+        assertions:
+          can_edit: false
+          can_view: false
+
+  - name: acme_regular can view and edit their own document, but boring_admin cannot
+    check:
+      - user: user:acme_regular
+        object: document:acme_regulars_document
+        assertions:
+          can_edit: true
+          can_view: true
+
+      - user: user:acme_admin
+        object: document:acme_regulars_document
+        assertions:
+          can_edit: true
+          can_view: true
+
+      - user: user:boring_admin
+        object: document:acme_regulars_document
+        assertions:
+          can_edit: false
+          can_view: false

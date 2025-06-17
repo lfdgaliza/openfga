@@ -1,0 +1,86 @@
+model: |
+  model
+    schema 1.1
+
+  type user
+
+  type org
+    relations
+      define admin: [user]
+
+      define can_edit_folders: admin
+
+  type folder
+    relations
+      define tenant: [org]
+      define editor: [user]
+      define owner: [user]
+      define parent: [folder]
+      define viewer: [user]
+
+      define can_view: viewer or can_edit
+      define can_edit: owner or editor or can_edit from parent or can_edit_folders from tenant
+
+  type document
+    relations
+      define editor: [user]
+      define owner: [user]
+      define parent: [folder]
+      define viewer: [user]
+
+      define can_view: viewer or can_edit
+      define can_edit: owner or editor or can_edit from parent
+
+# Bob is the owner of the document "welcome" inside the folder "root", owned by Anne.
+# Anne can view and edit the document because she is the owner of the folder.
+# But Bob cannot view or edit the folder "root" because he is not the owner or editor of it.
+# However, Bob can view and edit the document "welcome" because he is the owner of it.
+tuples:
+  - user: user:anne
+    object: folder:root
+    relation: owner
+  
+  - user: folder:root
+    object: document:welcome
+    relation: parent
+
+  - user: user:bob
+    object: document:welcome
+    relation: owner
+
+  - user: user:peter
+    object: org:acme
+    relation: admin
+
+  - user: org:acme
+    object: folder:root
+    relation: tenant
+
+tests:
+  - name: Tests for basic example
+    check:
+      - user: user:anne
+        object: document:welcome
+        assertions:
+          can_edit: true
+          can_view: true
+
+      - user: user:bob
+        object: folder:root
+        assertions:
+          can_edit: false
+          can_view: false
+
+  - name: Tests for multi-tenancy
+    check:
+      - user: user:peter
+        object: folder:root
+        assertions:
+          can_edit: true
+          can_view: true
+
+      - user: user:peter
+        object: document:welcome
+        assertions:
+          can_edit: true
+          can_view: true

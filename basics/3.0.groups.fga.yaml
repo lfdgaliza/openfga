@@ -1,0 +1,123 @@
+model: |
+  model
+    schema 1.1
+
+  type user
+
+  type org
+    relations
+      define admin: [user]
+
+      define can_edit_folders: admin
+
+  type group
+    relations
+      define member: [user, group#member]
+
+  type folder
+    relations
+      define tenant: [org]
+      define parent: [folder]
+      define owner: [user]
+      # this way we can assign groups to folders. The #member means that all members of the group can view the folder.
+      define viewer: [user, group#member] 
+      define editor: [user, group#member]
+
+      define can_view: viewer or can_edit
+      define can_edit: owner or editor or can_edit from parent or can_edit_folders from tenant
+
+  type document
+    relations
+      define owner: [user]
+      define parent: [folder]
+      define viewer: [user, group#member]
+      define editor: [user, group#member]
+
+      define can_view: viewer or can_edit
+      define can_edit: owner or editor or can_edit from parent
+
+tuples:
+  ### Tuples for basic example
+  # Anne is the owner of the root folder
+  - user: user:anne
+    object: folder:root
+    relation: owner
+  
+  - user: folder:root
+    object: document:welcome
+    relation: parent
+
+  # Bob is the owner of the document:welcome
+  - user: user:bob
+    object: document:welcome
+    relation: owner
+
+  ### Tuples for multi-tenancy example
+  # Peter is an admin of the org:acme
+  # and Peter can edit the root folder of the org:acme
+  - user: user:peter
+    object: org:acme
+    relation: admin
+
+  - user: org:acme
+    object: folder:root
+    relation: tenant
+
+  ### Tuples for groups example
+  # Martin is a member of the engineering group
+  # and the engineering group is a member of the everyone group
+  # and all members of the everyone group can edit the root folder
+  - user: user:martin
+    object: group:engineering
+    relation: member
+
+  - user: group:engineering#member
+    object: group:everyone
+    relation: member
+
+  - user: group:everyone#member
+    object: folder:root
+    relation: editor
+
+tests:
+  - name: Tests for basic example
+    check:
+      - user: user:anne
+        object: document:welcome
+        assertions:
+          can_edit: true
+          can_view: true
+
+      - user: user:bob
+        object: folder:root
+        assertions:
+          can_edit: false
+          can_view: false
+
+  - name: Tests for multi-tenancy
+    check:
+      - user: user:peter
+        object: folder:root
+        assertions:
+          can_edit: true
+          can_view: true
+
+      - user: user:peter
+        object: document:welcome
+        assertions:
+          can_edit: true
+          can_view: true
+
+  - name: Tests for groups
+    check:
+      - user: user:martin
+        object: document:welcome
+        assertions:
+          can_edit: true
+          can_view: true
+
+      - user: user:martin
+        object: folder:root
+        assertions:
+          can_edit: true
+          can_view: true
