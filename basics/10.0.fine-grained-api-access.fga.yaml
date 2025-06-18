@@ -37,12 +37,11 @@ model: |
       define org: [org]
       define parent: [folder]
       define owner: [user]
-      # this way we can assign groups to folders. The #member means that all members of the group can view the folder.
       define viewer: [user, group#member] 
       define editor: [user, group#member]
 
+      define can_edit: owner or editor or can_edit from parent or can_edit_folders from org
       define can_view: viewer or can_edit
-      define can_edit: owner or editor or can_edit from parent or admin from org
 
   type document
     relations
