@@ -1,4 +1,4 @@
-model_file: 'model/fga.mod'
+model_file: 'models/fga.mod'
 tuple_file: 'tuples.yaml'
 
 tests:
