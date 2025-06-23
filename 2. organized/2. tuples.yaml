@@ -1,0 +1,101 @@
+### Tuples for basic example
+# Anne is the owner of the root folder
+- user: user:anne
+  object: folder:root
+  relation: owner
+
+- user: folder:root
+  object: document:welcome
+  relation: parent
+
+# Bob is the owner of the document:welcome
+- user: user:bob
+  object: document:welcome
+  relation: owner
+
+### Tuples for multi-tenancy example
+# Peter is an admin of the org:acme
+# and Peter can edit the root folder of the org:acme
+- user: user:peter
+  object: org:acme
+  relation: admin
+
+- user: org:acme
+  object: folder:root
+  relation: org
+
+### Tuples for groups example
+# Martin is a member of the engineering group
+# and the engineering group is a member of the everyone group
+# and all members of the everyone group can edit the root folder
+- user: user:martin
+  object: group:engineering
+  relation: member
+
+- user: group:engineering#member
+  object: group:everyone
+  relation: member
+
+- user: group:everyone#member
+  object: folder:root
+  relation: editor
+
+### Tuple for public access example
+- user: user:*
+  object: document:public-roadmap
+  relation: viewer
+
+### Tuples for Relationship-based ABAC
+- user: folder:root
+  object: document:document-not-published
+  relation: parent
+
+- user: user:*
+  object: document:document-not-published
+  relation: viewer
+
+- user: document:public-roadmap
+  object: document:public-roadmap
+  relation: published
+
+### Tuples for super-admin example and conditional relationships
+- user: user:sam
+  object: system:root
+  relation: super_admin
+  condition: # This is now a necessary configuration to define the super admin
+    name: time_based_grant
+    context:
+      grant_time: "2023-01-01T00:00:00Z"
+      grant_duration: 1h
+
+- user: system:root
+  object: org:acme
+  relation: system
+
+### Tuples for custom roles
+# Define custom roles for the organization
+- user: role:acme-organization-manager#assignee
+  object: org:acme
+  relation: can_add_admin
+
+- user: role:acme-content-editor#assignee
+  object: org:acme
+  relation: can_create_document
+
+# Assign users to custom roles
+- user: user:omar
+  object: role:acme-organization-manager
+  relation: assignee
+
+- user: user:edith
+  object: role:acme-content-editor
+  relation: assignee
+
+### Tuples for fine grained API access
+- user: application:app-1
+  object: org:acme
+  relation: can_create_document
+
+- user: application:app-1
+  object: org:acme
+  relation: can_edit_folders
