@@ -1,0 +1,116 @@
+model_file: 'model/fga.mod'
+tuple_file: 'tuples.yaml'
+
+tests:
+  - name: Tests for basic example
+    check:
+      - user: user:anne
+        object: document:welcome
+        assertions:
+          can_edit: true
+          can_view: true
+
+      - user: user:bob
+        object: folder:root
+        assertions:
+          can_edit: false
+          can_view: false
+
+  - name: Tests for multi-tenancy
+    check:
+      - user: user:peter
+        object: folder:root
+        assertions:
+          can_edit: true
+          can_view: true
+
+      - user: user:peter
+        object: document:welcome
+        assertions:
+          can_edit: true
+          can_view: true
+
+  - name: Tests for groups
+    check:
+      - user: user:martin
+        object: document:welcome
+        assertions:
+          can_edit: true
+          can_view: true
+
+      - user: user:martin
+        object: folder:root
+        assertions:
+          can_edit: true
+          can_view: true
+
+  - name: Tests for public access
+    check:
+      - user: user:john
+        object: document:public-roadmap
+        assertions:
+          can_edit: false
+          can_view: true
+
+  - name: Tests for published documents
+    check:
+      - user: user:john
+        object: document:document-not-published
+        assertions:
+          can_edit: false
+          can_view: false
+
+      - user: user:peter
+        object: document:document-not-published
+        assertions:
+          can_edit: true
+          can_view: true
+
+  - name: Tests for super-admin example with conditional relationships
+    check:
+      - user: user:sam
+        object: document:welcome
+        context:
+          current_time: "2023-01-01T00:30:00Z"
+        assertions:
+          can_edit: true
+          can_view: true
+      - user: user:sam
+        object: document:welcome
+        context:
+          current_time: "2023-01-01T01:00:00Z"
+        assertions:
+          can_edit: false
+          can_view: false
+
+  - name: Tests for custom roles
+    check:
+      - user: user:omar
+        object: org:acme
+        assertions:
+          can_add_admin: true
+          can_create_document: false
+
+      - user: user:edith
+        object: org:acme
+        assertions:
+          can_add_admin: false
+          can_create_document: true
+
+  - name: Tests for API access
+    check:
+      - user: application:app-1
+        object: org:acme
+        assertions:
+          can_add_admin: false
+          can_create_document: true
+      - user: application:app-1
+        object: document:welcome
+        assertions:
+          can_edit: true
+          can_view: true
+      - user: application:app-2
+        object: org:acme
+        assertions:
+          can_add_admin: false
+          can_create_document: false

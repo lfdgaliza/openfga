@@ -19,3 +19,15 @@ Takes the fine-grained API access example and splits it into separate files for 
 
 To test this organized structure, run `fga model test --tests '.\3. tests.fga.yaml'`
 
+### 3. modularized/
+Further refactoring of the organized approach, breaking down the schema into multiple focused modules:
+
+- `model/` - Contains modular schema files
+  - `core.fga` - Core domain definitions
+  - `document.fga` - Document-specific permissions
+  - `fga.mod` - Module configuration
+- `tuples.yaml` - Tuple data
+- `tests.yaml` - Test cases
+
+To test this modular structure, run `fga model test --tests tests.yaml`
+

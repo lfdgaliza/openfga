@@ -1,0 +1,28 @@
+module core
+
+type user
+
+type application
+
+type system
+relations
+    define super_admin: [user with time_based_grant]
+
+type role
+relations
+    define assignee : [user, group#member]
+
+type org
+relations
+    define system: [system]
+    define admin: [user] or super_admin from system
+
+    define can_add_admin: [role#assignee, application] or admin
+
+type group
+relations
+    define member: [user, group#member]
+
+condition time_based_grant(current_time: timestamp, grant_time: timestamp, grant_duration: duration) {
+    current_time < grant_time + grant_duration
+}
